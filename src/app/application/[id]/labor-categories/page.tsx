@@ -1,17 +1,17 @@
 'use client'
-import { useSession } from 'next-auth/react'
 import { useRouter, useParams } from 'next/navigation'
 import { useEffect } from 'react'
+import { useAuth } from '@/lib/useAuth'
 import { Rocket, ArrowLeft, Plus } from 'lucide-react'
 
 export default function LaborCategoriesPage() {
-  const { data: session, status } = useSession()
+  const { user, loading } = useAuth()
   const router = useRouter()
   const params = useParams()
   const appId = params.id as string
 
-  useEffect(() => { if (status === 'unauthenticated') router.push('/auth/signin') }, [status, router])
-  if (status === 'loading') return <div className="min-h-screen flex items-center justify-center"><div className="text-slate-400">Loading...</div></div>
+  useEffect(() => { if (!loading && !user) router.push('/') }, [loading, user, router])
+  if (loading) return <div className="min-h-screen flex items-center justify-center"><div className="text-slate-400">Loading...</div></div>
 
   const navItems = [
     { label: 'Checklist', href: `/application/${appId}/checklist` },
@@ -30,9 +30,7 @@ export default function LaborCategoriesPage() {
             <span className="font-bold text-white text-sm">ScheduleLaunch</span>
           </div>
           <div className="flex gap-1 pb-3">
-            {navItems.map(item => (
-              <button key={item.label} onClick={() => router.push(item.href)} className={item.active ? 'nav-link-active' : 'nav-link'}>{item.label}</button>
-            ))}
+            {navItems.map(item => (<button key={item.label} onClick={() => router.push(item.href)} className={item.active ? 'nav-link-active' : 'nav-link'}>{item.label}</button>))}
           </div>
         </div>
       </header>
@@ -40,17 +38,13 @@ export default function LaborCategoriesPage() {
         <div className="flex items-center justify-between mb-8">
           <div>
             <h1 className="text-2xl font-bold text-white mb-1">Labor Categories</h1>
-            <p className="text-slate-400 text-sm">Define labor categories for each SIN with titles, descriptions, and proposed rates.</p>
+            <p className="text-slate-400 text-sm">Define labor categories for each SIN.</p>
           </div>
           <button className="btn-primary text-sm flex items-center gap-2"><Plus className="w-4 h-4" /> Add Category</button>
         </div>
-
         <div className="card text-center py-16">
           <p className="text-slate-400 mb-4">No labor categories defined yet.</p>
-          <p className="text-slate-500 text-sm max-w-md mx-auto">
-            Add your labor categories with titles, descriptions, education requirements, experience levels, and proposed hourly rates.
-            Remember: 518210C categories MUST have &quot;cloud&quot; in the title and description.
-          </p>
+          <p className="text-slate-500 text-sm max-w-md mx-auto">518210C categories MUST have &quot;cloud&quot; in the title and description.</p>
         </div>
       </main>
     </div>
