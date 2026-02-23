@@ -1,0 +1,160 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─── NextAuth Models ────────────────────────────────────────
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+// ─── User & Application Models ──────────────────────────────
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String?   @unique
+  emailVerified DateTime?
+  image         String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  accounts     Account[]
+  sessions     Session[]
+  applications GsaApplication[]
+}
+
+model GsaApplication {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Company Info
+  companyName     String?
+  uei             String?
+  cage            String?
+  samActive       Boolean @default(false)
+  yearsInBusiness Int?
+
+  // Certifications
+  is8a            Boolean @default(false)
+  isEdwosb        Boolean @default(false)
+  isWosb          Boolean @default(false)
+  isSdvosb        Boolean @default(false)
+  isHubzone       Boolean @default(false)
+
+  // SIN Selections
+  sins            String[] @default([])
+
+  // Readiness Checklist Progress (JSON)
+  checklistData   Json?
+
+  // Overall Status
+  status          ApplicationStatus @default(NOT_STARTED)
+  readinessScore  Int?
+  lastReviewedAt  DateTime?
+
+  // Documents & Narratives
+  narratives      Narrative[]
+  laborCategories LaborCategory[]
+  reviews         AiReview[]
+}
+
+enum ApplicationStatus {
+  NOT_STARTED
+  IN_PROGRESS
+  UNDER_REVIEW
+  READY_TO_SUBMIT
+  SUBMITTED
+}
+
+model Narrative {
+  id              String   @id @default(cuid())
+  applicationId   String
+  application     GsaApplication @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  
+  factorType      NarrativeType
+  sinCode         String?
+  projectNumber   Int?
+  
+  content         String   @db.Text
+  charCount       Int      @default(0)
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+enum NarrativeType {
+  FACTOR_1_CORPORATE
+  FACTOR_3_QUALITY
+  FACTOR_4_PROJECT
+}
+
+model LaborCategory {
+  id              String   @id @default(cuid())
+  applicationId   String
+  application     GsaApplication @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  
+  sinCode         String
+  title           String
+  description     String   @db.Text
+  education       String?
+  experience      String?
+  proposedRate    Decimal?
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+model AiReview {
+  id              String   @id @default(cuid())
+  applicationId   String
+  application     GsaApplication @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  
+  overallScore    Int
+  verdict         String
+  summary         String   @db.Text
+  findings        Json
+  dealbreakers    Json?
+  strengths       Json?
+  
+  createdAt       DateTime @default(now())
+}
