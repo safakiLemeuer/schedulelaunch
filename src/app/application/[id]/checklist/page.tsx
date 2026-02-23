@@ -1,17 +1,17 @@
 'use client'
 
-import { useRouter, useParams } from 'next/navigation'
+import { useParams } from 'next/navigation'
+import { useSession } from 'next-auth/react'
 import { useEffect, useState } from 'react'
-import { useAuth } from '@/lib/useAuth'
+import AppNav from '@/components/AppNav'
 import {
-  Rocket, ArrowLeft, CheckCircle, Circle,
-  FileCheck, Brain, DollarSign, Settings, ClipboardCheck, ChevronDown, ChevronRight, ExternalLink
+  CheckCircle, Circle, FileCheck, Brain, DollarSign,
+  Settings, ClipboardCheck, ChevronDown, ChevronRight, ExternalLink
 } from 'lucide-react'
 import { GSA_CHECKLIST, CHECKLIST_CATEGORIES } from '@/lib/checklist-data'
 
 export default function ChecklistPage() {
-  const { user, loading } = useAuth()
-  const router = useRouter()
+  const { data: session } = useSession()
   const params = useParams()
   const appId = params.id as string
 
@@ -22,16 +22,14 @@ export default function ChecklistPage() {
   )
   const [saving, setSaving] = useState(false)
 
-  useEffect(() => { if (!loading && !user) router.push('/') }, [loading, user, router])
-
   useEffect(() => {
-    if (user && appId) {
+    if (session && appId) {
       fetch('/api/applications').then(r => r.json()).then(apps => {
         const app = (Array.isArray(apps) ? apps : []).find((a: any) => a.id === appId)
         if (app) { setApplication(app); setCheckedItems(app.checklistData || {}) }
       })
     }
-  }, [user, appId])
+  }, [session, appId])
 
   const toggleItem = async (itemId: string) => {
     const updated = { ...checkedItems, [itemId]: !checkedItems[itemId] }
@@ -45,7 +43,7 @@ export default function ChecklistPage() {
     setSaving(false)
   }
 
-  if (loading || !application) {
+  if (!application) {
     return <div className="min-h-screen flex items-center justify-center"><div className="animate-pulse text-slate-400">Loading...</div></div>
   }
 
@@ -58,41 +56,18 @@ export default function ChecklistPage() {
     Pricing: DollarSign, Administrative: ClipboardCheck, 'Final Review': Brain,
   }
 
-  const navItems = [
-    { label: 'Checklist', href: `/application/${appId}/checklist`, active: true },
-    { label: 'Narratives', href: `/application/${appId}/narratives` },
-    { label: 'Labor Categories', href: `/application/${appId}/labor-categories` },
-    { label: 'AI Review', href: `/application/${appId}/review` },
-  ]
-
   return (
     <div className="min-h-screen">
-      <header className="border-b border-slate-800/50 bg-slate-950/90 backdrop-blur-md sticky top-0 z-50">
-        <div className="max-w-6xl mx-auto px-6">
-          <div className="h-16 flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <button onClick={() => router.push('/dashboard')} className="text-slate-500 hover:text-white"><ArrowLeft className="w-5 h-5" /></button>
-              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-orange-500 flex items-center justify-center"><Rocket className="w-4 h-4 text-white" /></div>
-              <div>
-                <div className="font-bold text-white text-sm">{application.companyName || 'GSA MAS Application'}</div>
-                <div className="text-xs text-slate-500">{progressPct}% complete</div>
-              </div>
-            </div>
-            <div className="text-sm text-slate-500">{saving ? 'Saving...' : 'Auto-saved'}</div>
-          </div>
-          <div className="flex gap-1 pb-3 overflow-x-auto">
-            {navItems.map(item => (
-              <button key={item.label} onClick={() => router.push(item.href)} className={item.active ? 'nav-link-active' : 'nav-link'}>{item.label}</button>
-            ))}
-          </div>
-        </div>
-      </header>
+      <AppNav appId={appId} activeTab="checklist" title={application.companyName || 'GSA MAS Application'} />
 
       <main className="max-w-6xl mx-auto px-6 py-8">
         <div className="card mb-8">
           <div className="flex items-center justify-between mb-3">
             <h2 className="text-lg font-bold text-white">Application Readiness</h2>
-            <span className="text-sm font-semibold text-slate-400">{completedItems} / {totalItems} required</span>
+            <div className="flex items-center gap-3">
+              <span className="text-sm text-slate-500">{saving ? 'Saving...' : 'Auto-saved'}</span>
+              <span className="text-sm font-semibold text-slate-400">{completedItems} / {totalItems} required</span>
+            </div>
           </div>
           <div className="w-full h-3 bg-slate-700 rounded-full overflow-hidden">
             <div className="h-full rounded-full transition-all duration-500" style={{

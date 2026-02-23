@@ -1,55 +1,43 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getSession } from '@/lib/auth'
+import { getServerSession } from 'next-auth'
+import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 
 export async function POST(req: NextRequest) {
-  const session = await getSession()
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  }
+  const session = await getServerSession(authOptions)
+  if (!session?.user?.id) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const { applicationId, documents } = await req.json()
-
   if (!applicationId || !documents || Object.keys(documents).length === 0) {
     return NextResponse.json({ error: 'Missing application ID or documents' }, { status: 400 })
   }
 
-  const app = await prisma.gsaApplication.findFirst({
-    where: { id: applicationId, userId: session.user.id },
-  })
-  if (!app) {
-    return NextResponse.json({ error: 'Application not found' }, { status: 404 })
-  }
+  const app = await prisma.gsaApplication.findFirst({ where: { id: applicationId, userId: session.user.id } })
+  if (!app) return NextResponse.json({ error: 'Application not found' }, { status: 404 })
 
   const docSummary = Object.entries(documents as Record<string, string>)
     .map(([key, content]) => {
-      const preview = (content as string).substring(0, 8000)
-      return `=== ${key.toUpperCase()} ===\nCharacter count: ${(content as string).length}\n\n${preview}${(content as string).length > 8000 ? '\n\n[TRUNCATED]' : ''}`
+      const preview = content.substring(0, 8000)
+      return `=== ${key.toUpperCase()} ===\nCharacter count: ${content.length}\n\n${preview}${content.length > 8000 ? '\n\n[TRUNCATED]' : ''}`
     })
     .join('\n\n')
 
   const systemPrompt = `You are a senior GSA MAS Contracting Officer with 20 years of experience evaluating Schedule offers. Review this new offeror's submission and identify every deficiency.
 
 RULES:
-- Score each element 0-100. 0=missing, 50=inadequate, 80+=meets requirements, 95+=exceeds.
+- Score each element 0-100.
 - Flag specific problematic text and explain why.
 - Check character counts (10,000 limit per eOffer field).
-- For 518210C, check for "cloud" in labor category titles and descriptions.
 
 RESPOND IN JSON ONLY (no markdown):
 {
   "overallScore": <0-100>,
   "overallVerdict": "<LIKELY AWARD | NEEDS WORK | AT RISK | WILL BE REJECTED>",
   "executiveSummary": "<2-3 sentences>",
-  "categories": {
-    "<category_id>": {
-      "score": <0-100>,
-      "findings": [{"elementId":"<id>","score":<0-100>,"severity":"<critical|major|minor|pass>","finding":"<issue>","impact":"<why>","fix":"<action>"}]
-    }
-  },
-  "dealbreakers": ["<rejection issues>"],
-  "clarificationRisks": ["<delay issues>"],
-  "strengths": ["<positives>"]
+  "categories": {},
+  "dealbreakers": [],
+  "clarificationRisks": [],
+  "strengths": []
 }`
 
   try {

@@ -1,31 +1,31 @@
 'use client'
 
 import { useRouter } from 'next/navigation'
+import { useSession, signOut } from 'next-auth/react'
 import { useEffect, useState } from 'react'
-import { useAuth } from '@/lib/useAuth'
 import {
   Rocket, LogOut, Plus, FileCheck, Brain, BarChart3,
   ChevronRight, Clock, CheckCircle
 } from 'lucide-react'
 
 export default function DashboardPage() {
-  const { user, loading, logout } = useAuth()
+  const { data: session, status } = useSession()
   const router = useRouter()
   const [applications, setApplications] = useState<any[]>([])
   const [loadingApps, setLoadingApps] = useState(true)
 
   useEffect(() => {
-    if (!loading && !user) router.push('/')
-  }, [loading, user, router])
+    if (status === 'unauthenticated') router.push('/auth/signin')
+  }, [status, router])
 
   useEffect(() => {
-    if (user) {
+    if (session) {
       fetch('/api/applications')
         .then((r) => r.json())
         .then((data) => { setApplications(Array.isArray(data) ? data : []); setLoadingApps(false) })
         .catch(() => setLoadingApps(false))
     }
-  }, [user])
+  }, [session])
 
   const createApplication = async () => {
     const res = await fetch('/api/applications', {
@@ -37,16 +37,12 @@ export default function DashboardPage() {
     router.push(`/application/${app.id}/checklist`)
   }
 
-  const handleLogout = async () => {
-    await logout()
-    router.push('/')
-  }
-
-  if (loading || loadingApps) {
+  if (status === 'loading' || loadingApps) {
     return <div className="min-h-screen flex items-center justify-center"><div className="animate-pulse text-slate-400">Loading dashboard...</div></div>
   }
-  if (!user) return null
+  if (!session) return null
 
+  const user = session.user
   const statusConfig: Record<string, { icon: any; color: string; label: string }> = {
     NOT_STARTED: { icon: Clock, color: 'text-slate-400', label: 'Not Started' },
     IN_PROGRESS: { icon: BarChart3, color: 'text-blue-400', label: 'In Progress' },
@@ -70,7 +66,8 @@ export default function DashboardPage() {
               <div className="text-sm font-medium text-white">{user.name}</div>
               <div className="text-xs text-slate-500">{user.email}</div>
             </div>
-            <button onClick={handleLogout} className="text-slate-500 hover:text-white transition-colors" title="Sign out">
+            {user.image && <img src={user.image} alt="" className="w-8 h-8 rounded-full" />}
+            <button onClick={() => signOut({ callbackUrl: '/' })} className="text-slate-500 hover:text-white transition-colors" title="Sign out">
               <LogOut className="w-4 h-4" />
             </button>
           </div>
@@ -99,7 +96,7 @@ export default function DashboardPage() {
             <div className="text-xs text-slate-500 font-medium">Ready</div>
           </div>
           <div className="card py-4 px-5">
-            <div className="text-2xl font-bold text-orange-400">{applications.reduce((max, a) => Math.max(max, a.readinessScore || 0), 0) || '—'}</div>
+            <div className="text-2xl font-bold text-orange-400">{applications.reduce((max: number, a: any) => Math.max(max, a.readinessScore || 0), 0) || '—'}</div>
             <div className="text-xs text-slate-500 font-medium">Best Score</div>
           </div>
         </div>
@@ -115,9 +112,7 @@ export default function DashboardPage() {
           <div className="card text-center py-16">
             <Rocket className="w-12 h-12 text-slate-600 mx-auto mb-4" />
             <h3 className="text-lg font-bold text-white mb-2">No applications yet</h3>
-            <p className="text-slate-400 text-sm mb-6 max-w-md mx-auto">
-              Start your first GSA MAS application. We&apos;ll guide you through every step.
-            </p>
+            <p className="text-slate-400 text-sm mb-6 max-w-md mx-auto">Start your first GSA MAS application. We&apos;ll guide you through every step.</p>
             <button onClick={createApplication} className="btn-accent inline-flex items-center gap-2">
               <Plus className="w-4 h-4" /> Start Your First Application
             </button>

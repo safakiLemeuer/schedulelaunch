@@ -1,43 +1,24 @@
 'use client'
 
 import { useRouter } from 'next/navigation'
-import { useState, useEffect } from 'react'
-import { useAuth } from '@/lib/useAuth'
-import { Rocket, Shield, FileCheck, Brain, ArrowRight } from 'lucide-react'
+import { useSession, signIn } from 'next-auth/react'
+import { useEffect } from 'react'
+import { Rocket, Shield, FileCheck, Brain, Linkedin } from 'lucide-react'
 
 export default function HomePage() {
-  const { user, loading, login } = useAuth()
+  const { data: session, status } = useSession()
   const router = useRouter()
-  const [email, setEmail] = useState('')
-  const [name, setName] = useState('')
-  const [loggingIn, setLoggingIn] = useState(false)
-  const [error, setError] = useState('')
 
   useEffect(() => {
-    if (user) router.push('/dashboard')
-  }, [user, router])
+    if (session) router.push('/dashboard')
+  }, [session, router])
 
-  const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!email) return
-    setLoggingIn(true)
-    setError('')
-    const success = await login(email, name)
-    if (success) {
-      router.push('/dashboard')
-    } else {
-      setError('Login failed. Please try again.')
-    }
-    setLoggingIn(false)
-  }
-
-  if (loading) {
+  if (status === 'loading') {
     return <div className="min-h-screen flex items-center justify-center"><div className="animate-pulse text-slate-400">Loading...</div></div>
   }
 
   return (
     <div className="min-h-screen">
-      {/* Nav */}
       <nav className="border-b border-slate-800/50 backdrop-blur-md bg-slate-950/80 sticky top-0 z-50">
         <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
           <div className="flex items-center gap-3">
@@ -46,11 +27,12 @@ export default function HomePage() {
             </div>
             <span className="text-lg font-bold text-white tracking-tight">ScheduleLaunch</span>
           </div>
-          <a href="#get-started" className="btn-primary text-sm py-2 px-5">Get Started</a>
+          <button onClick={() => signIn('linkedin', { callbackUrl: '/dashboard' })} className="btn-primary text-sm py-2 px-5 flex items-center gap-2">
+            <Linkedin className="w-4 h-4" /> Sign In
+          </button>
         </div>
       </nav>
 
-      {/* Hero */}
       <section className="relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-b from-blue-600/5 via-transparent to-transparent" />
         <div className="max-w-6xl mx-auto px-6 pt-24 pb-20 text-center relative">
@@ -60,9 +42,7 @@ export default function HomePage() {
           </div>
           <h1 className="text-5xl md:text-6xl font-extrabold text-white leading-tight tracking-tight mb-6">
             From Zero to{' '}
-            <span className="bg-gradient-to-r from-blue-400 to-orange-400 bg-clip-text text-transparent">
-              GSA Schedule
-            </span>
+            <span className="bg-gradient-to-r from-blue-400 to-orange-400 bg-clip-text text-transparent">GSA Schedule</span>
             <br />in 30 Days
           </h1>
           <p className="text-xl text-slate-400 max-w-2xl mx-auto mb-10 leading-relaxed">
@@ -70,56 +50,14 @@ export default function HomePage() {
             ScheduleLaunch guides you through every step of your GSA MAS
             application — with AI that reviews your work like a real Contracting Officer.
           </p>
+          <button onClick={() => signIn('linkedin', { callbackUrl: '/dashboard' })}
+            className="inline-flex items-center gap-3 py-4 px-8 rounded-xl bg-[#0A66C2] hover:bg-[#004182] text-white font-semibold text-lg transition-colors">
+            <Linkedin className="w-5 h-5" /> Get Started with LinkedIn
+          </button>
+          <p className="text-xs text-slate-600 mt-4">Free to start · No credit card required</p>
         </div>
       </section>
 
-      {/* Login Form */}
-      <section id="get-started" className="max-w-md mx-auto px-6 py-12">
-        <div className="card">
-          <h2 className="text-xl font-bold text-white mb-2 text-center">Get Started Free</h2>
-          <p className="text-slate-400 text-sm text-center mb-6">Enter your email to create an account or sign in.</p>
-
-          <form onSubmit={handleLogin} className="space-y-4">
-            <div>
-              <label className="block text-xs font-medium text-slate-400 mb-1.5">Your Name</label>
-              <input
-                type="text"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                placeholder="Jane Smith"
-                className="input-field"
-              />
-            </div>
-            <div>
-              <label className="block text-xs font-medium text-slate-400 mb-1.5">Email Address *</label>
-              <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="jane@company.com"
-                className="input-field"
-                required
-              />
-            </div>
-
-            {error && (
-              <div className="p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 text-sm">{error}</div>
-            )}
-
-            <button
-              type="submit"
-              disabled={!email || loggingIn}
-              className="w-full btn-accent py-3.5 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {loggingIn ? 'Signing in...' : 'Continue →'}
-            </button>
-          </form>
-
-          <p className="text-xs text-slate-600 text-center mt-4">No password required · Free to start</p>
-        </div>
-      </section>
-
-      {/* Features */}
       <section className="max-w-6xl mx-auto px-6 py-20">
         <div className="grid md:grid-cols-3 gap-6">
           {[
@@ -138,7 +76,6 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Pain Points */}
       <section className="max-w-4xl mx-auto px-6 py-20 border-t border-slate-800/50">
         <h2 className="text-3xl font-bold text-white text-center mb-4">Sound Familiar?</h2>
         <p className="text-slate-400 text-center mb-12">These are the exact problems ScheduleLaunch was built to solve.</p>
@@ -159,7 +96,6 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Footer */}
       <footer className="border-t border-slate-800/50 py-10">
         <div className="max-w-6xl mx-auto px-6 flex flex-col md:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-2">

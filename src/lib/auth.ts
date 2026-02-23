@@ -1,58 +1,40 @@
-import { cookies } from 'next/headers'
+import { NextAuthOptions } from 'next-auth'
+import { PrismaAdapter } from '@next-auth/prisma-adapter'
 import { prisma } from '@/lib/prisma'
 
-const SESSION_COOKIE = 'sl_session'
-const SESSION_MAX_AGE = 30 * 24 * 60 * 60 // 30 days
-
-export async function createSession(userId: string) {
-  const token = crypto.randomUUID()
-  const expires = new Date(Date.now() + SESSION_MAX_AGE * 1000)
-
-  await prisma.session.create({
-    data: {
-      sessionToken: token,
-      userId,
-      expires,
+export const authOptions: NextAuthOptions = {
+  adapter: PrismaAdapter(prisma),
+  providers: [
+    {
+      id: 'linkedin',
+      name: 'LinkedIn',
+      type: 'oauth',
+      wellKnown: 'https://www.linkedin.com/oauth/.well-known/openid-configuration',
+      clientId: process.env.LINKEDIN_CLIENT_ID!,
+      clientSecret: process.env.LINKEDIN_CLIENT_SECRET!,
+      authorization: { params: { scope: 'openid profile email' } },
+      idToken: true,
+      profile(profile) {
+        return {
+          id: profile.sub,
+          name: profile.name,
+          email: profile.email,
+          image: profile.picture,
+        }
+      },
     },
-  })
-
-  const cookieStore = await cookies()
-  cookieStore.set(SESSION_COOKIE, token, {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'lax',
-    path: '/',
-    maxAge: SESSION_MAX_AGE,
-  })
-
-  return token
-}
-
-export async function getSession() {
-  const cookieStore = await cookies()
-  const token = cookieStore.get(SESSION_COOKIE)?.value
-  if (!token) return null
-
-  const session = await prisma.session.findUnique({
-    where: { sessionToken: token },
-    include: { user: true },
-  })
-
-  if (!session || session.expires < new Date()) {
-    if (session) {
-      await prisma.session.delete({ where: { sessionToken: token } }).catch(() => {})
-    }
-    return null
-  }
-
-  return { user: session.user }
-}
-
-export async function destroySession() {
-  const cookieStore = await cookies()
-  const token = cookieStore.get(SESSION_COOKIE)?.value
-  if (token) {
-    await prisma.session.deleteMany({ where: { sessionToken: token } }).catch(() => {})
-    cookieStore.delete(SESSION_COOKIE)
-  }
+  ],
+  session: { strategy: 'database', maxAge: 30 * 24 * 60 * 60 },
+  pages: {
+    signIn: '/auth/signin',
+    error: '/auth/error',
+  },
+  callbacks: {
+    async session({ session, user }) {
+      if (session.user) {
+        (session.user as any).id = user.id
+      }
+      return session
+    },
+  },
 }
