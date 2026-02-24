@@ -1,6 +1,6 @@
 # 🚀 ScheduleLaunch — GSA MAS Readiness Platform
 
-**By BHT Solutions** | `schedulelaunch.thebhtlabs.com`
+**By BHT Solutions** | `gsa.thebhtlabs.com`
 
 AI-powered platform that guides small businesses from zero to GSA Schedule award.
 
@@ -89,8 +89,8 @@ nano .env
 3. Go to **Credentials** → **Create Credentials** → **OAuth 2.0 Client ID**
 4. Application type: **Web application**
 5. Name: `ScheduleLaunch`
-6. Authorized JavaScript origins: `https://schedulelaunch.thebhtlabs.com`
-7. Authorized redirect URIs: `https://schedulelaunch.thebhtlabs.com/api/auth/callback/google`
+6. Authorized JavaScript origins: `https://gsa.thebhtlabs.com`
+7. Authorized redirect URIs: `https://gsa.thebhtlabs.com/api/auth/callback/google`
 8. Copy Client ID and Client Secret to your `.env`
 
 ### 6. Set Up LinkedIn OAuth
@@ -99,7 +99,7 @@ nano .env
 2. Create a new app
 3. Company: Select your company page (or create one)
 4. Go to **Auth** tab
-5. Add redirect URL: `https://schedulelaunch.thebhtlabs.com/api/auth/callback/linkedin`
+5. Add redirect URL: `https://gsa.thebhtlabs.com/api/auth/callback/linkedin`
 6. Under **Products**, request access to **Sign In with LinkedIn using OpenID Connect**
 7. Copy Client ID and Client Secret to your `.env`
 
@@ -107,14 +107,14 @@ nano .env
 
 ```bash
 # Copy nginx config
-sudo cp nginx/schedulelaunch.thebhtlabs.com /etc/nginx/sites-available/
-sudo ln -s /etc/nginx/sites-available/schedulelaunch.thebhtlabs.com /etc/nginx/sites-enabled/
+sudo cp nginx/gsa.thebhtlabs.com /etc/nginx/sites-available/
+sudo ln -s /etc/nginx/sites-available/gsa.thebhtlabs.com /etc/nginx/sites-enabled/
 
 # Test config
 sudo nginx -t
 
 # Get SSL certificate
-sudo certbot --nginx -d schedulelaunch.thebhtlabs.com
+sudo certbot --nginx -d gsa.thebhtlabs.com
 
 # Reload Nginx
 sudo systemctl reload nginx
@@ -139,7 +139,7 @@ docker compose exec app npx prisma db push
 
 ### 9. Verify
 
-1. Visit `https://schedulelaunch.thebhtlabs.com`
+1. Visit `https://gsa.thebhtlabs.com`
 2. You should see the landing page
 3. Click "Continue with Google" — should redirect to Google OAuth
 4. After sign-in, you should land on the dashboard
@@ -149,10 +149,10 @@ docker compose exec app npx prisma db push
 
 ## DNS Configuration (Already Done)
 
-Your A record for `schedulelaunch.thebhtlabs.com` should point to your Hostinger VPS IP address.
+Your A record for `gsa.thebhtlabs.com` should point to your Hostinger VPS IP address.
 
 ```
-schedulelaunch.thebhtlabs.com  →  A  →  YOUR_VPS_IP
+gsa.thebhtlabs.com  →  A  →  YOUR_VPS_IP
 ```
 
 ---

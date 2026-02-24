@@ -15,7 +15,7 @@ NC='\033[0m'
 echo -e "${BLUE}"
 echo "╔═══════════════════════════════════════════════════╗"
 echo "║       🚀 ScheduleLaunch VPS Setup Script         ║"
-echo "║       schedulelaunch.thebhtlabs.com              ║"
+echo "║       gsa.thebhtlabs.com              ║"
 echo "╚═══════════════════════════════════════════════════╝"
 echo -e "${NC}"
 
@@ -90,7 +90,7 @@ DATABASE_URL=postgresql://schedulelaunch:${DB_PASSWORD}@db:5432/schedulelaunch?s
 
 # NextAuth (auto-generated)
 NEXTAUTH_SECRET=${NEXTAUTH_SECRET}
-NEXTAUTH_URL=https://schedulelaunch.thebhtlabs.com
+NEXTAUTH_URL=https://gsa.thebhtlabs.com
 
 # ─── YOU MUST FILL THESE IN ──────────────────────────────
 # Google OAuth (https://console.cloud.google.com/apis/credentials)
@@ -113,13 +113,13 @@ fi
 
 # ─── Step 7: Configure Nginx ─────────────────────────────────
 echo -e "${YELLOW}[7/8] Configuring Nginx...${NC}"
-cp /opt/schedulelaunch/nginx/schedulelaunch.thebhtlabs.com /etc/nginx/sites-available/schedulelaunch.thebhtlabs.com
+cp /opt/schedulelaunch/nginx/gsa.thebhtlabs.com /etc/nginx/sites-available/gsa.thebhtlabs.com
 
 # Remove default site if it exists
 rm -f /etc/nginx/sites-enabled/default
 
 # Enable our site
-ln -sf /etc/nginx/sites-available/schedulelaunch.thebhtlabs.com /etc/nginx/sites-enabled/schedulelaunch.thebhtlabs.com
+ln -sf /etc/nginx/sites-available/gsa.thebhtlabs.com /etc/nginx/sites-enabled/gsa.thebhtlabs.com
 
 # Test and reload
 nginx -t && systemctl reload nginx
@@ -152,14 +152,14 @@ echo -e "     → Add LinkedIn OAuth credentials"
 echo -e "     → Add Anthropic API key"
 echo ""
 echo -e "  ${RED}2. GET SSL CERTIFICATE:${NC}"
-echo -e "     certbot --nginx -d schedulelaunch.thebhtlabs.com"
+echo -e "     certbot --nginx -d gsa.thebhtlabs.com"
 echo ""
 echo -e "  ${RED}3. BUILD & LAUNCH:${NC}"
 echo -e "     cd /opt/schedulelaunch"
 echo -e "     docker compose up -d --build"
 echo ""
 echo -e "  ${RED}4. VERIFY:${NC}"
-echo -e "     Visit https://schedulelaunch.thebhtlabs.com"
+echo -e "     Visit https://gsa.thebhtlabs.com"
 echo ""
 echo -e "${GREEN}Database password and NextAuth secret have been auto-generated.${NC}"
 echo -e "${GREEN}They are stored in /opt/schedulelaunch/.env${NC}"

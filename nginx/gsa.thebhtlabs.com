@@ -1,12 +1,12 @@
-# /etc/nginx/sites-available/schedulelaunch.thebhtlabs.com
+# /etc/nginx/sites-available/gsa.thebhtlabs.com
 # After placing this file, run:
-#   sudo ln -s /etc/nginx/sites-available/schedulelaunch.thebhtlabs.com /etc/nginx/sites-enabled/
-#   sudo certbot --nginx -d schedulelaunch.thebhtlabs.com
+#   sudo ln -s /etc/nginx/sites-available/gsa.thebhtlabs.com /etc/nginx/sites-enabled/
+#   sudo certbot --nginx -d gsa.thebhtlabs.com
 #   sudo nginx -t && sudo systemctl reload nginx
 
 server {
     listen 80;
-    server_name schedulelaunch.thebhtlabs.com;
+    server_name gsa.thebhtlabs.com;
 
     # Certbot will modify this block to add SSL redirect
     location / {
@@ -16,11 +16,11 @@ server {
 
 server {
     listen 443 ssl http2;
-    server_name schedulelaunch.thebhtlabs.com;
+    server_name gsa.thebhtlabs.com;
 
     # SSL certs will be added by Certbot
-    # ssl_certificate /etc/letsencrypt/live/schedulelaunch.thebhtlabs.com/fullchain.pem;
-    # ssl_certificate_key /etc/letsencrypt/live/schedulelaunch.thebhtlabs.com/privkey.pem;
+    # ssl_certificate /etc/letsencrypt/live/gsa.thebhtlabs.com/fullchain.pem;
+    # ssl_certificate_key /etc/letsencrypt/live/gsa.thebhtlabs.com/privkey.pem;
 
     # Security headers
     add_header X-Frame-Options "SAMEORIGIN" always;
